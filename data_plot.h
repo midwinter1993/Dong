@@ -3,11 +3,13 @@
 
 #include <qwt_plot.h>
 
-const int PLOT_SIZE = 201;      // 0 to 200
+#define PLOT_SIZE  201      // 0 to 200
 #define START true 
 #define STOP false
 
 class MainWindow;
+class QTcpServer;
+class QTcpSocket;
 
 class DataPlot : public QwtPlot
 {
@@ -15,6 +17,7 @@ class DataPlot : public QwtPlot
 
 public:
     DataPlot(QWidget* = NULL);
+	~DataPlot();
 	bool isStatus();
 	void setData_x(double *data, int begin, int end);
 	void setData_y(double *data, int begin, int end);
@@ -26,9 +29,17 @@ public slots:
 	void setStatusStopSlot();
 	void clearSlot();
 	void fileDrawSlot();
+	//void updataPlotSlot();
+	//void updataData();
+	void acceptConnevtionSlot();
+	void readDataSlot();
+
+
+signals:
+	void updataPlotSignal();
 
 protected:
-    virtual void timerEvent(QTimerEvent *e);
+    // virtual void timerEvent(QTimerEvent *e);
 	bool status;
 
 private:
@@ -40,6 +51,11 @@ private:
 
     int d_interval; // timer in ms
     int d_timerId;
+    QTcpServer *server;
+	QTcpSocket *client;
+
+	char *buf;
+	void initTcp();
 };
 
 #endif

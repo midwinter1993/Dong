@@ -1,6 +1,9 @@
 #include "data_plot.h"
 #include <QByteArray>
 #include <QFileDialog>
+#include <QHostAddress>
+#include <QTcpServer>
+#include <QTcpSocket>
 
 #include <qwt_plot_canvas.h>
 #include <qwt_painter.h>
@@ -16,6 +19,7 @@
 #include <fstream>
 #include <iostream>
 
+using namespace std;
 //
 //  Initialize main window
 //
@@ -86,9 +90,24 @@ DataPlot::DataPlot(QWidget *parent):
     
     // setTimerIntervalSlot(0.0); 
 	setTimerIntervalSlot(d_interval);
+	// connect(this, SIGNAL(updataPlotSignal()), this, SLOT(updataPlotSlot()));
+	
+	initTcp();
+	buf = new char[1024];
+
 }
 
-//
+DataPlot::~DataPlot()
+{
+	delete []buf;
+}
+
+void DataPlot::initTcp()
+{
+	server = new QTcpServer(this);
+	connect(server, SIGNAL(newConnection()), this, SLOT(acceptConnevtionSlot()));
+	// server->listen(QHostAddress::Any, 10000);
+}
 //  Set a plain canvas frame and align the scales to it
 //
 void DataPlot::alignScales()
@@ -126,6 +145,7 @@ void DataPlot::setTimerIntervalSlot(double ms)
 }
 
 //  Generate new values 
+/*
 void DataPlot::timerEvent(QTimerEvent *)
 {
     static double phase = 0.0;
@@ -148,15 +168,22 @@ void DataPlot::timerEvent(QTimerEvent *)
 		phase += M_PI * 0.02;
 	}
 }
+*/
 
 void DataPlot::setStatusStartSlot()
 {
-	status = true;
+	if (!status){
+		status = true;
+		server->listen(QHostAddress::Any, 10000);
+	}
 }
 
 void DataPlot::setStatusStopSlot()
 {
-	status = false;
+	if (status){
+		status = false;
+		server->close();
+	}
 }
 
 bool DataPlot::isStatus()
@@ -193,6 +220,32 @@ void DataPlot::setData_y(double *data, int begin, int end)
 		dataY[j] = data[j];
 	}
 }
+/*
+void DataPlot::updataData()
+{
+	// cout << "updataData  begin----------------------" << endl;
+	// int i = 0;
+	// for (i = PLOT_SIZE - 1; i > len - 1; i--)
+	// {
+	// 	cout << i << endl;
+	// 	dataX[i] = dataX[i-1];
+	// 	dataY[i] = dataY[i-1];
+	// }
+	// cout << buf_x[0] << "------------------------ok" << endl;
+	// for (i = 0; i < len; i++)
+	// {
+	// 	cout << i << endl;
+	// 	// dataX[i] = buf_x[i];
+	// 	dataY[i] = buf_y[i];
+	// 	cout << buf_y[i] << endl;
+	// }
+	// cout << "updataData end-----------------------------" << endl;
+	for (int i = 0; i < 10; i++)
+		dataY[i] = i * 10;
+	cout << dataY[0] << ' ' << dataY[1] << endl;
+	replot();
+}
+*/
 
 void DataPlot::fileDrawSlot()
 {
@@ -215,4 +268,47 @@ void DataPlot::fileDrawSlot()
 	setData_y(y_tmp, 0, cnt - 2);
 
 	replot();
+}
+/*
+void DataPlot::updataPlotSlot()
+{
+	replot();
+}
+*/
+void DataPlot::acceptConnevtionSlot()
+{
+	client = server->nextPendingConnection();
+	connect(client, SIGNAL(readyRead()), this, SLOT(readDataSlot()));
+}
+
+void DataPlot::readDataSlot()
+{
+	if (status)
+	{
+		client->read(buf, client->bytesAvailable());	
+	
+		// cout << *(double*)buf << ' ' << *(double*)(buf+8) << ' ' << *(double*)(buf+16) << ' ' << *(double*)(buf+24) << endl;
+		double buf_x[2] = {*(double*)buf, *(double*)(buf + 8)};
+		double buf_y[2] = {*(double*)(buf + 16), *(double*)(buf + 24)};
+		int i = 0;
+		int len = 2;
+		for (i = PLOT_SIZE - 1; i > len - 1; i--)
+		{
+			// cout << i << endl;
+			// dataX[i] = dataX[i-1];
+			dataY[i] = dataY[i-1];
+		}
+		// cout << buf_x[0] << "------------------------ok" << endl;
+		for (i = 0; i < len; i++)
+		{
+			// cout << i << endl;
+			// dataX[i] = buf_x[i];
+			dataY[i] = buf_y[i];
+			// cout << buf_y[i] << endl;
+		}
+		// cout << "-----------------here------------------" << endl;
+		replot();
+		// cout << "fjklafjl" << endl;
+		// plot->update();
+	}
 }

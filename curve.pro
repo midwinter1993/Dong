@@ -7,6 +7,7 @@ TARGET =
 DEPENDPATH += .
 INCLUDEPATH += .INCLUDEPATH += /usr/local/qwt-5.2.1/include
 LIBS += -L"/usr/local/qwt-5.2.1/lib/" -lqwt
+QT += network
 
 # Input
 HEADERS += data_plot.h main_window.h pixmaps.h settingWindow.h clear.xpm

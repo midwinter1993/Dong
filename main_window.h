@@ -22,6 +22,9 @@ class QwtPlotPanner;
 class QToolButton;
 class settingWindow;
 
+//class QTcpServer;
+//class QTcpSocket;
+
 class MainWindow: public QMainWindow
 {
 	Q_OBJECT
@@ -34,13 +37,16 @@ private slots:
     void enableZoomModeSlot(bool);
 	void settingSlot();
 	void changeOpacitySlot(qreal opacity);
+	//void acceptConnevtionSlot();
+	//void readDataSlot();
 
 signals:
 	void setOpacitySignal(qreal opacity);
+	//void updataPlotSignal();
 
 public:
     MainWindow();
-    
+	~MainWindow(); 
 private:
 	QToolBar *toolBar;
 	QWidget *hBox;
@@ -56,6 +62,7 @@ private:
 
 	void createMenus();
 	void createButtons_Actions();
+	//void initTcp();
 	
 	void showInfo(QString text = QString::null);
     QwtPlotZoomer *d_zoomer;
@@ -77,6 +84,10 @@ private:
 	settingWindow *settingWin; 
 	QAction *settingAction;
 	// QString styleItem;
+	//QTcpServer *server;
+	//QTcpSocket *client;
+
+	//char *buf;
 };
 
 #endif

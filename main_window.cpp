@@ -17,6 +17,9 @@
 #include <QToolButton>
 #include <QFile>
 #include <QByteArray>
+//#include <QHostAddress>
+//#include <QTcpServer>
+//#include <QTcpSocket>
 #include <iostream>
 
 #include <qwt_counter.h>
@@ -52,6 +55,7 @@ public:
 
 MainWindow::MainWindow()
 {
+	/* set the default theme, read the qss file */	
 	QFile file(":/qss/abc.qss");
     file.open(QFile::ReadOnly);
     styleSheet = QLatin1String(file.readAll());
@@ -66,7 +70,7 @@ MainWindow::MainWindow()
 
 	toolBar->setAllowedAreas(Qt::TopToolBarArea | Qt::BottomToolBarArea);
 	
-	
+	/* init the zoomer function */	
 	d_zoomer = new Zoomer( QwtPlot::xBottom, QwtPlot::yLeft, 
     plot->canvas());
     d_zoomer->setRubberBand(QwtPicker::RectRubberBand);
@@ -86,9 +90,10 @@ MainWindow::MainWindow()
     d_picker->setRubberBand(QwtPicker::CrossRubberBand);
     d_picker->setTrackerPen(QColor(Qt::white));
 	
-	
+	/* create actions and connect the signal with slots*/	
 	createButtons_Actions();
 	
+	//connect(this, SIGNAL(updataPlotSignal()), plot, SLOT(replot()));
 	connect(fileAction, SIGNAL(triggered()), plot, SLOT(fileDrawSlot()));
 	connect(btnStart, SIGNAL(triggered()), plot, SLOT(setStatusStartSlot()));
 	connect(btnStop, SIGNAL(triggered()), plot, SLOT(setStatusStopSlot()));
@@ -98,6 +103,7 @@ MainWindow::MainWindow()
     connect(d_picker, SIGNAL(moved(const QPoint &)), this, SLOT(movedSlot(const QPoint &)));
     connect(d_picker, SIGNAL(selected(const QwtPolygon &)), this, SLOT(selectedSlot(const QwtPolygon &)));
 
+	/* init the tool bar */
 	toolBar->addSeparator();
 	toolBar->addAction(btnZoom);
 	toolBar->addAction(btnStart);
@@ -124,12 +130,19 @@ MainWindow::MainWindow()
 	toolBar->addSeparator();
 	toolBar->addWidget(hBox);
 	addToolBar(toolBar);
-	
+
+	/*
+	   initial the menu
+	*/
 	createMenus();
     
     enableZoomModeSlot(false);
 	d_picker->setEnabled(false);
     showInfo();
+
+	/* initial the Tcp network */
+	//initTcp();
+	//buf = new char[1024];
 
 	setCentralWidget(plot);
 	setWindowTitle("( . )_( . )");
@@ -137,6 +150,12 @@ MainWindow::MainWindow()
 	// setIcon(QIcon(clear_xpm));
 }
 
+MainWindow::~MainWindow()
+{
+	//server->close();
+	//client->close();
+	//delete []buf;
+}
 void MainWindow::createButtons_Actions()
 {
 	// btnZoom = new QToolButton(this);
@@ -208,7 +227,14 @@ void MainWindow::createMenus()
 	aboutMenu->addAction(aboutAction);
 	aboutMenu->addAction(aboutQtAction);
 }
-
+/*
+void MainWindow::initTcp()
+{
+	server = new QTcpServer(this);
+	connect(server, SIGNAL(newConnection()), this, SLOT(acceptConnevtionSlot()));
+	server->listen(QHostAddress::Any, 10000);
+}
+*/
 void MainWindow::aboutSlot()
 {
 	QMessageBox::about(this, tr("About Project"),
@@ -283,3 +309,22 @@ void MainWindow::changeOpacitySlot(qreal opacity)
 {
 	this->setWindowOpacity(opacity);
 }
+/*
+void MainWindow::acceptConnevtionSlot()
+{
+	client = server->nextPendingConnection();
+	connect(client, SIGNAL(readyRead()), this, SLOT(readDataSlot()));
+}
+
+void MainWindow::readDataSlot()
+{
+	client->read(buf, client->bytesAvailable());	
+	cout << *(double*)buf << ' ' << *(double*)(buf+8) << ' ' << *(double*)(buf+16) << ' ' << *(double*)(buf+24) << endl;
+	double x[2] = {*(double*)buf, *(double*)(buf + 8)};
+	double y[2] = {*(double*)(buf + 16), *(double*)(buf + 24)};
+	cout << "-----------------here------------------" << endl;
+	plot->updataData();
+	cout << "fjklafjl" << endl;
+	// plot->update();
+}
+*/
