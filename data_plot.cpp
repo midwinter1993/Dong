@@ -13,6 +13,8 @@
 #include <qwt_legend.h>
 #include <qwt_scale_draw.h>
 #include <qwt_math.h>
+
+#include <QtGlobal>
 #include <cassert>
 #include <stdio.h>
 #include <stdlib.h>
@@ -28,8 +30,18 @@ DataPlot::DataPlot(QWidget *parent):
     QwtPlot(parent),
 	status(false),
     d_interval(20),
-    d_timerId(-1)
+    d_timerId(-1),
+	tmp(0.0),
+	dataPoint(0),
+	startPoint(0),
+	timeStamp(0.0),
+	actionTime(0),
+	dataCount(0),
+	lastCount(0)
 {
+	dataX = new double[BUF_SIZE];
+	dataY = new double[BUF_SIZE];
+	csibuf = new double[BUF_SIZE];
     // Disable polygon clipping
     QwtPainter::setDeviceClipping(false);
 
@@ -84,29 +96,35 @@ DataPlot::DataPlot(QWidget *parent):
 
     // Axis 
     setAxisTitle(QwtPlot::xBottom, "Time/seconds");
-    setAxisScale(QwtPlot::xBottom, 0, 101);
+    setAxisScale(QwtPlot::xBottom, 0, PLOT_SIZE * 0.5);
 
     setAxisTitle(QwtPlot::yLeft, "Values");
-    setAxisScale(QwtPlot::yLeft, 0, 150);
+    setAxisScale(QwtPlot::yLeft, 20, 40);
     
     // setTimerIntervalSlot(0.0); 
 	setTimerIntervalSlot(d_interval);
 	// connect(this, SIGNAL(updataPlotSignal()), this, SLOT(updataPlotSlot()));
 	
 	initTcp();
-	buf = new char[1024];
+	buf = new char[MSG_SIZE + 1];
+	buf[MSG_SIZE] = '\0';
 
+	//TODO delete
+	setStatusStartSlot();
 }
 
 DataPlot::~DataPlot()
 {
+	delete []dataX;
+	delete []dataY;
+	delete []csibuf;
 	delete []buf;
 }
 
 void DataPlot::initTcp()
 {
 	server = new QTcpServer(this);
-	connect(server, SIGNAL(newConnection()), this, SLOT(acceptConnevtionSlot()));
+	connect(server, SIGNAL(newConnection()), this, SLOT(acceptConnectionSlot()));
 	// server->listen(QHostAddress::Any, 12345);
 }
 //  Set a plain canvas frame and align the scales to it
@@ -203,7 +221,7 @@ void DataPlot::clearSlot()
 
 void DataPlot::setData_x(double *data, int begin, int end)
 {
-	assert(end <= PLOT_SIZE && data != NULL);
+	Q_ASSERT(end <= PLOT_SIZE && data != NULL);
 	for (int i = begin; i < end; i++)
 	{
 		dataX[i] = data[i];
@@ -213,7 +231,7 @@ void DataPlot::setData_x(double *data, int begin, int end)
 
 void DataPlot::setData_y(double *data, int begin, int end)
 {
-	assert(end <= PLOT_SIZE && data != NULL);
+	Q_ASSERT(end <= PLOT_SIZE && data != NULL);
 
 	int j;
 	for (j = begin; j < end; j++)
@@ -276,12 +294,14 @@ void DataPlot::updataPlotSlot()
 	replot();
 }
 */
-void DataPlot::acceptConnevtionSlot()
+void DataPlot::acceptConnectionSlot()
 {
 	client = server->nextPendingConnection();
 	connect(client, SIGNAL(readyRead()), this, SLOT(readDataSlot()));
+	connect(client, SIGNAL(disconnected()), this, SLOT(disconnectedSlot()));
+	client->setReadBufferSize(65536);
 }
-
+/*
 void DataPlot::readDataSlot()
 {
 	if (status)
@@ -312,4 +332,72 @@ void DataPlot::readDataSlot()
 		// cout << "fjklafjl" << endl;
 		// plot->update();
 	}
+}
+*/
+
+void DataPlot::readDataSlot()
+{
+	if (status) 
+	{
+		//-----------------------------------
+		qDebug() << "bytes available: " << client->bytesAvailable() << '\n';
+		if (client->bytesAvailable() < MSG_SIZE)
+			return;
+		// Q_ASSERT(client->read(buf, MSG_SIZE) == MSG_SIZE);
+		quint64 temp = client->read(buf, MSG_SIZE);
+		qDebug() << "temp " << temp << '\n';
+		//TODO timestamp = ...
+		// qDebug() << "buf--->" << (char*)buf << '\n';
+		timeStamp = *(unsigned long*)(buf + 2) / 1e6;
+		timeStamp = buf[0] + (buf[1] << 8) + (buf[2] << 16) + (buf[3] << 24);
+		// qDebug() << "timeStamp: " << timeStamp << "actionTime: " << actionTime << '\n';
+		dataCount += 1;
+
+		tmp = 0;
+		for (int i = 0; i < 30; i++)
+		{
+			tmp += sqrt(((double)buf[22 + i]) * ((double)buf[22 + i]) + ((double)buf[52 + i]) * ((double)buf[ 52 + i]));
+		}
+		// qDebug() << "receive data:" << dataCount << " tmp:-------->" << tmp / 30.0 << "\n";
+		csibuf[dataPoint] = tmp / 30.0;
+		// qDebug() << csibuf[dataPoint] << "------csibuf=---\n";
+		// qDebug() << "timeStamp" << timeStamp << "timeStamp-actionTime" << fabs(timeStamp - actionTime) << endl;
+
+		if ((fabs(timeStamp - actionTime) > LIMIT_TIME) && dataCount > 200) 
+		{
+			actionTime = timeStamp;
+			// qDebug() << "startPoint" << startPoint << ' ' << "dataPoint" << dataPoint << ' ' << "receive sum" << dataCount - lastCount << "dataCount" << dataCount << "lastCount" << lastCount << '\n';
+			for (unsigned int i = PLOT_SIZE - 1; i > dataCount - lastCount -  1; i--)
+			{
+				dataY[i] = dataY[i - 1];
+			}
+			for(unsigned int i =0; i < dataCount - lastCount; i++)
+			{
+				dataY[i] = csibuf[(i + startPoint) % BUF_SIZE];
+				// qDebug() << "datay:" << dataY[i] << ' ';
+				// setStatusStopSlot();
+			}
+			replot();
+
+			startPoint = dataPoint - 2 * OVERHEAD;
+			if (startPoint < 0)
+			{
+				startPoint += BUF_SIZE;
+			}
+			lastCount = dataCount;
+		}
+		dataPoint += 1;
+		if (dataPoint >= BUF_SIZE)
+		{
+			dataPoint = 0;
+		}
+	}
+}
+
+void DataPlot::disconnectedSlot()
+{
+	qDebug() << "disconnectedSlot" << '\n';
+	// if (client != NULL)
+		// delete client;
+	// qDebug() << "Disable:";
 }

@@ -28,8 +28,9 @@ public slots:
 	void fileDrawSlot();
 	//void updataPlotSlot();
 	//void updataData();
-	void acceptConnevtionSlot();
+	void acceptConnectionSlot();
 	void readDataSlot();
+	void disconnectedSlot();
 
 
 signals:
@@ -41,10 +42,11 @@ protected:
 
 private:
     void alignScales();
+	void initTcp();
 
-    double dataX[PLOT_SIZE]; 
-    double dataY[PLOT_SIZE]; 
-    double d_z[PLOT_SIZE];
+    // double dataX[PLOT_SIZE]; 
+    // double dataY[PLOT_SIZE]; 
+    // double d_z[PLOT_SIZE];
 
     int d_interval; // timer in ms
     int d_timerId;
@@ -52,7 +54,16 @@ private:
 	QTcpSocket *client;
 
 	char *buf;
-	void initTcp();
+	double *dataX;
+	double *dataY;
+	double *csibuf;
+	double tmp;
+	int dataPoint;
+	int startPoint;
+	double timeStamp;
+	double actionTime;
+	unsigned int dataCount;
+	unsigned int lastCount;
 };
 
 #endif

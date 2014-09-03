@@ -14,7 +14,7 @@ RESOURCES += curve.qrc resource.qrc source.qrc
 
 
 INCLUDEPATH += .INCLUDEPATH += /usr/local/qwt-5.2.1/include
-#LIBS += -L"/usr/local/qwt-5.2.1/lib/" -lqwt
+
 LIBS += -L"/usr/local/qwt-5.2.1/lib/" -lqwt
 QT += network
 
