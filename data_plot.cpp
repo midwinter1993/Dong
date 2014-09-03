@@ -18,6 +18,7 @@
 #include <stdlib.h>
 #include <fstream>
 #include <iostream>
+#include "def.h"
 
 using namespace std;
 //
@@ -106,7 +107,7 @@ void DataPlot::initTcp()
 {
 	server = new QTcpServer(this);
 	connect(server, SIGNAL(newConnection()), this, SLOT(acceptConnevtionSlot()));
-	// server->listen(QHostAddress::Any, 10000);
+	// server->listen(QHostAddress::Any, 12345);
 }
 //  Set a plain canvas frame and align the scales to it
 //
@@ -174,7 +175,7 @@ void DataPlot::setStatusStartSlot()
 {
 	if (!status){
 		status = true;
-		server->listen(QHostAddress::Any, 10000);
+		server->listen(QHostAddress::Any, PORT);
 	}
 }
 

@@ -2,10 +2,7 @@
 #define _DATA_PLOT_H 1
 
 #include <qwt_plot.h>
-
-#define PLOT_SIZE  201      // 0 to 200
-#define START true 
-#define STOP false
+#include "def.h"
 
 class MainWindow;
 class QTcpServer;
