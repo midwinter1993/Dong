@@ -3,12 +3,13 @@
 
 #include <QMainWindow>
 #include <qwt_polygon.h>
-
+#include "tcpserver.h"
+#include "data_plot.h"
 class QMainWindow;
 class QToolBar;
 class QWidget;
 class QHBoxLayout;
-class DataPlot;
+//class DataPlot;
 class QwtCounter;
 class QMenu;
 class QMenuBar;
@@ -21,9 +22,7 @@ class QwtPlotPicker;
 class QwtPlotPanner;
 class QToolButton;
 class settingWindow;
-
-//class QTcpServer;
-//class QTcpSocket;
+class QVBoxLayout;
 
 class MainWindow: public QMainWindow
 {
@@ -37,57 +36,50 @@ private slots:
     void enableZoomModeSlot(bool);
 	void settingSlot();
 	void changeOpacitySlot(qreal opacity);
-	//void acceptConnevtionSlot();
-	//void readDataSlot();
 
 signals:
 	void setOpacitySignal(qreal opacity);
-	//void updataPlotSignal();
 
 public:
     MainWindow();
 	~MainWindow(); 
+	
 private:
-	QToolBar *toolBar;
+	void createMenus();
+	void createButtons_Actions();
+	void showInfo(QString text = QString::null);
+	
 	QWidget *hBox;
 	QLabel *label;
 	QwtCounter *counter;
 	QHBoxLayout *layout;
-	DataPlot *plot;
-
+	
+	QMenu *fileMenu;
+	QMenu *aboutMenu;
+	QToolBar *toolBar;
+	
+	QTextEdit *textEdit;
 	QAction *btnStart;
 	QAction *btnStop;
 	QAction *helpAction;	
 	QAction *btnClear;
-
-	void createMenus();
-	void createButtons_Actions();
-	//void initTcp();
-	
-	void showInfo(QString text = QString::null);
-    QwtPlotZoomer *d_zoomer;
-    QwtPlotPicker *d_picker;
-    QwtPlotPanner *d_panner;
-    QAction*btnZoom;
-    
 	QAction *aboutQtAction;
 	QAction *aboutAction;
 	QAction *fileAction;
 	QAction *exitAction;
 
-	QMenu *fileMenu;
-	QMenu *aboutMenu;
-	QTextEdit *textEdit;
+    QwtPlotZoomer *d_zoomer;
+    QwtPlotPicker *d_picker;
+    QwtPlotPanner *d_panner;
+    QAction*btnZoom;
 
 	QString styleSheet;
-
 	settingWindow *settingWin; 
 	QAction *settingAction;
-	// QString styleItem;
-	//QTcpServer *server;
-	//QTcpSocket *client;
 
-	//char *buf;
+	TcpServer *tcpServer;
+	DataPlot *plot;
+	DataPlot *plot_origin;
 };
 
 #endif

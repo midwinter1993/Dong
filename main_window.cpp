@@ -3,6 +3,8 @@
 #include "pixmaps.h"
 #include "clear.xpm"
 #include "data_plot.h"
+#include "tcpserver.h"
+#include "def.h"
 
 #include <QToolBar>
 #include <QLabel>
@@ -17,6 +19,8 @@
 #include <QToolButton>
 #include <QFile>
 #include <QByteArray>
+#include <QtGlobal>
+#include <QVBoxLayout>
 //#include <QHostAddress>
 //#include <QTcpServer>
 //#include <QTcpSocket>
@@ -64,6 +68,8 @@ MainWindow::MainWindow()
 	// styleItem = "Theme1";
     
 	DataPlot *plot = new DataPlot(this);
+	DataPlot *plot_origin = new DataPlot(this);
+	plot_origin->setAxisScale(QwtPlot::yLeft, 20,50);
 
 	QToolBar *toolBar = new QToolBar(this);
 	toolBar->setFixedHeight(80);
@@ -72,23 +78,22 @@ MainWindow::MainWindow()
 	
 	/* init the zoomer function */	
 	d_zoomer = new Zoomer( QwtPlot::xBottom, QwtPlot::yLeft, 
-    plot->canvas());
-    d_zoomer->setRubberBand(QwtPicker::RectRubberBand);
-    d_zoomer->setRubberBandPen(QColor(Qt::green));
-    d_zoomer->setTrackerMode(QwtPicker::ActiveOnly);
-    d_zoomer->setTrackerPen(QColor(Qt::magenta));
-
+	plot->canvas());
+	d_zoomer->setRubberBand(QwtPicker::RectRubberBand);
+	d_zoomer->setRubberBandPen(QColor(Qt::green));
+	d_zoomer->setTrackerMode(QwtPicker::ActiveOnly);
+	d_zoomer->setTrackerPen(QColor(Qt::magenta));
     
-    d_panner = new QwtPlotPanner(plot->canvas());
-    d_panner->setMouseButton(Qt::MidButton);
+	d_panner = new QwtPlotPanner(plot->canvas());
+	d_panner->setMouseButton(Qt::MidButton);
 
-    d_picker = new QwtPlotPicker(QwtPlot::xBottom, QwtPlot::yLeft,
-        QwtPicker::PointSelection | QwtPicker::DragSelection, 
-        QwtPlotPicker::NoRubberBand, QwtPicker::AlwaysOn, 
+	d_picker = new QwtPlotPicker(QwtPlot::xBottom, QwtPlot::yLeft,
+	QwtPicker::PointSelection | QwtPicker::DragSelection, 
+	QwtPlotPicker::NoRubberBand, QwtPicker::AlwaysOn, 
         plot->canvas());
-    d_picker->setRubberBandPen(QColor(Qt::green));
-    d_picker->setRubberBand(QwtPicker::CrossRubberBand);
-    d_picker->setTrackerPen(QColor(Qt::white));
+	d_picker->setRubberBandPen(QColor(Qt::green));
+	d_picker->setRubberBand(QwtPicker::CrossRubberBand);
+	d_picker->setTrackerPen(QColor(Qt::white));
 	
 	/* create actions and connect the signal with slots*/	
 	createButtons_Actions();
@@ -100,7 +105,7 @@ MainWindow::MainWindow()
 	connect(btnClear, SIGNAL(triggered()), plot, SLOT(clearSlot()));
 	
 	connect(btnZoom, SIGNAL(toggled(bool)), this, SLOT(enableZoomModeSlot(bool)));
-    connect(d_picker, SIGNAL(moved(const QPoint &)), this, SLOT(movedSlot(const QPoint &)));
+	connect(d_picker, SIGNAL(moved(const QPoint &)), this, SLOT(movedSlot(const QPoint &)));
     connect(d_picker, SIGNAL(selected(const QwtPolygon &)), this, SLOT(selectedSlot(const QwtPolygon &)));
 
 	/* init the tool bar */
@@ -123,7 +128,7 @@ MainWindow::MainWindow()
 
 	QHBoxLayout *layout = new QHBoxLayout(hBox);
 	layout->addWidget(label);
-	// layout->addWidget(counter);
+
 	layout->addWidget(textEdit);
 	layout->addWidget(new QWidget(hBox), 10); // spacer);
 
@@ -131,30 +136,38 @@ MainWindow::MainWindow()
 	toolBar->addWidget(hBox);
 	addToolBar(toolBar);
 
-	/*
-	   initial the menu
-	*/
+	//* initial the menu
 	createMenus();
     
     enableZoomModeSlot(false);
 	d_picker->setEnabled(false);
     showInfo();
 
-	/* initial the Tcp network */
-	//initTcp();
-	//buf = new char[1024];
-
-	setCentralWidget(plot);
+	QWidget *widget = new QWidget(this);
+	QVBoxLayout *mainLayout = new QVBoxLayout(widget);
+	mainLayout->addWidget(plot);
+	mainLayout->addWidget(plot_origin);
+	
+	widget->setLayout(mainLayout);
+	setCentralWidget(widget);
+	
+	//setCentralWidget(plot);
 	setWindowTitle("( . )_( . )");
+	
 	this->setWindowOpacity(0.9);
 	// setIcon(QIcon(clear_xpm));
+	
+	tcpServer = new TcpServer(this);
+	
+	// Server begins to listen the port
+	tcpServer->listen(QHostAddress::Any, PORT);
+	connect(tcpServer, SIGNAL(dataReadSignal()), plot, SLOT(dataProcessSlot())/*Qt::BlockingQueuedConnection*/);
+	connect(tcpServer, SIGNAL(dataReadSignal()), plot_origin, SLOT(dataProcessOriginSlot())/*Qt::BlockingQueuedConnection*/);
 }
 
 MainWindow::~MainWindow()
 {
-	//server->close();
-	//client->close();
-	//delete []buf;
+
 }
 void MainWindow::createButtons_Actions()
 {
@@ -309,22 +322,4 @@ void MainWindow::changeOpacitySlot(qreal opacity)
 {
 	this->setWindowOpacity(opacity);
 }
-/*
-void MainWindow::acceptConnevtionSlot()
-{
-	client = server->nextPendingConnection();
-	connect(client, SIGNAL(readyRead()), this, SLOT(readDataSlot()));
-}
 
-void MainWindow::readDataSlot()
-{
-	client->read(buf, client->bytesAvailable());	
-	cout << *(double*)buf << ' ' << *(double*)(buf+8) << ' ' << *(double*)(buf+16) << ' ' << *(double*)(buf+24) << endl;
-	double x[2] = {*(double*)buf, *(double*)(buf + 8)};
-	double y[2] = {*(double*)(buf + 16), *(double*)(buf + 24)};
-	cout << "-----------------here------------------" << endl;
-	plot->updataData();
-	cout << "fjklafjl" << endl;
-	// plot->update();
-}
-*/
