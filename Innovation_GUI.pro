@@ -8,23 +8,31 @@ DEPENDPATH += .
 INCLUDEPATH += .
 
 # Input
-HEADERS += data_plot.h \
+HEADERS += curvePlot.h \
+		   curveItem.h \
+		   spectrogramPlot.h \
+		   spectrogramItem.h \
            def.h \
-           main_window.h \
+           mainWindow.h \
            pixmaps.h \
            settingWindow.h \
            tcpserver.h \
            tcpthread.h \
 		   func.h \
-           clear.xpm
-SOURCES += data_plot.cpp \
+           images/clear.xpm
+SOURCES += curvePlot.cpp \
+		   curveItem.cpp \
+		   spectrogramPlot.cpp \
+		   spectrogramItem.cpp \
            main.cpp \
-           main_window.cpp \
+           mainWindow.cpp \
            settingWindow.cpp \
            tcpserver.cpp \
            tcpthread.cpp \
 		   func.cpp
-RESOURCES += curve.qrc resource.qrc source.qrc
+RESOURCES += qrc/curve.qrc \
+			 qrc/resource.qrc \
+			 qrc/source.qrc
 
 INCLUDEPATH += .INCLUDEPATH += /usr/local/qwt-5.2.1/include
 

@@ -1,0 +1,17 @@
+<RCC>
+<qresource>
+	<file>../images/splash.png</file>
+	<file>../images/cancel.png</file>
+    <file>../images/icon.png</file>
+    <file>../images/new.png</file>
+    <file>../images/open.png</file>
+    <file>../images/save.png</file>
+    <file>../images/cut.png</file>
+    <file>../images/copy.png</file>
+    <file>../images/paste.png</file>
+    <file>../images/find.png</file>
+    <file>../images/gotocell.png</file>
+	<file>../images/264.png</file>
+	<file>../images/268.png</file>
+</qresource>
+</RCC>

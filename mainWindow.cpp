@@ -1,8 +1,8 @@
-#include "main_window.h"
+#include "mainWindow.h"
 #include "settingWindow.h"
 #include "pixmaps.h"
-#include "clear.xpm"
-#include "data_plot.h"
+#include "images/clear.xpm"
+#include "curvePlot.h"
 #include "tcpserver.h"
 #include "def.h"
 
@@ -21,41 +21,18 @@
 #include <QByteArray>
 #include <QtGlobal>
 #include <QVBoxLayout>
+#include <QTimer>
 //#include <QHostAddress>
 //#include <QTcpServer>
 //#include <QTcpSocket>
 #include <iostream>
+#include "stdlib.h"
+#include "stdio.h"
+#include "time.h"
+int cccccnt = 0;
 
-#include <qwt_counter.h>
-#include <qwt_plot_zoomer.h>
-#include <qwt_plot_panner.h>
-#include <qwt_text.h>
+
 using namespace std;
-
-class Zoomer: public QwtPlotZoomer
-{
-public:
-    Zoomer(int xAxis, int yAxis, QwtPlotCanvas *canvas):
-        QwtPlotZoomer(xAxis, yAxis, canvas)
-    {
-        setSelectionFlags(QwtPicker::DragSelection | QwtPicker::CornerToCorner);
-        setTrackerMode(QwtPicker::AlwaysOff);
-        setRubberBand(QwtPicker::NoRubberBand);
-
-        // RightButton: zoom out by 1
-        // Ctrl+RightButton: zoom out to full size
-
-#if QT_VERSION < 0x040000
-        setMousePattern(QwtEventPattern::MouseSelect2,
-            Qt::RightButton, Qt::ControlButton);
-#else
-        setMousePattern(QwtEventPattern::MouseSelect2,
-            Qt::RightButton, Qt::ControlModifier);
-#endif
-        setMousePattern(QwtEventPattern::MouseSelect3,
-            Qt::RightButton);
-    }
-};
 
 MainWindow::MainWindow()
 {
@@ -67,46 +44,31 @@ MainWindow::MainWindow()
     file.close();
 	// styleItem = "Theme1";
     
-	DataPlot *plot = new DataPlot(this);
-	DataPlot *plot_origin = new DataPlot(this);
-	plot_origin->setAxisScale(QwtPlot::yLeft, 20,50);
+	CurvePlot *curvePlot = new CurvePlot(this);
+	curvePlot->setTitle("Data Plot after PCA");
+	// CurvePlot *curvePlot_origin = new CurvePlot(this);
+	// curvePlot_origin->setAxisScale(QwtPlot::yLeft, 0,55);
+	// curvePlot_origin->setTitle("Original Data Plot");
+	spectroPlot = new SpectrogramPlot(this);
 
 	QToolBar *toolBar = new QToolBar(this);
 	toolBar->setFixedHeight(80);
 
 	toolBar->setAllowedAreas(Qt::TopToolBarArea | Qt::BottomToolBarArea);
 	
-	/* init the zoomer function */	
-	d_zoomer = new Zoomer( QwtPlot::xBottom, QwtPlot::yLeft, 
-	plot->canvas());
-	d_zoomer->setRubberBand(QwtPicker::RectRubberBand);
-	d_zoomer->setRubberBandPen(QColor(Qt::green));
-	d_zoomer->setTrackerMode(QwtPicker::ActiveOnly);
-	d_zoomer->setTrackerPen(QColor(Qt::magenta));
-    
-	d_panner = new QwtPlotPanner(plot->canvas());
-	d_panner->setMouseButton(Qt::MidButton);
-
-	d_picker = new QwtPlotPicker(QwtPlot::xBottom, QwtPlot::yLeft,
-	QwtPicker::PointSelection | QwtPicker::DragSelection, 
-	QwtPlotPicker::NoRubberBand, QwtPicker::AlwaysOn, 
-        plot->canvas());
-	d_picker->setRubberBandPen(QColor(Qt::green));
-	d_picker->setRubberBand(QwtPicker::CrossRubberBand);
-	d_picker->setTrackerPen(QColor(Qt::white));
+	
 	
 	/* create actions and connect the signal with slots*/	
 	createButtons_Actions();
 	
-	//connect(this, SIGNAL(updataPlotSignal()), plot, SLOT(replot()));
-	connect(fileAction, SIGNAL(triggered()), plot, SLOT(fileDrawSlot()));
-	connect(btnStart, SIGNAL(triggered()), plot, SLOT(setStatusStartSlot()));
-	connect(btnStop, SIGNAL(triggered()), plot, SLOT(setStatusStopSlot()));
-	connect(btnClear, SIGNAL(triggered()), plot, SLOT(clearSlot()));
+	//connect(this, SIGNAL(updataPlotSignal()), curvePlot, SLOT(recurvePlot()));
+	connect(fileAction, SIGNAL(triggered()), curvePlot, SLOT(fileDrawSlot()));
+	//connect(btnStart, SIGNAL(triggered()), curvePlot, SLOT(setStatusStartSlot()));
+	//connect(btnStop, SIGNAL(triggered()), curvePlot, SLOT(setStatusStopSlot()));
+	connect(btnClear, SIGNAL(triggered()), curvePlot, SLOT(clearSlot()));
 	
-	connect(btnZoom, SIGNAL(toggled(bool)), this, SLOT(enableZoomModeSlot(bool)));
-	connect(d_picker, SIGNAL(moved(const QPoint &)), this, SLOT(movedSlot(const QPoint &)));
-    connect(d_picker, SIGNAL(selected(const QwtPolygon &)), this, SLOT(selectedSlot(const QwtPolygon &)));
+	connect(btnZoom, SIGNAL(toggled(bool)), curvePlot, SLOT(enableZoomModeSlot(bool)));
+
 
 	/* init the tool bar */
 	toolBar->addSeparator();
@@ -139,19 +101,18 @@ MainWindow::MainWindow()
 	//* initial the menu
 	createMenus();
     
-    enableZoomModeSlot(false);
-	d_picker->setEnabled(false);
-    showInfo();
-
+    
 	QWidget *widget = new QWidget(this);
-	QVBoxLayout *mainLayout = new QVBoxLayout(widget);
-	mainLayout->addWidget(plot);
-	mainLayout->addWidget(plot_origin);
+	// QVBoxLayout *mainLayout = new QVBoxLayout(widget);
+	QHBoxLayout *mainLayout = new QHBoxLayout(widget);
+	mainLayout->addWidget(curvePlot);
+	// mainLayout->addWidget(curvePlot_origin);
+	mainLayout->addWidget(spectroPlot);
 	
 	widget->setLayout(mainLayout);
 	setCentralWidget(widget);
 	
-	//setCentralWidget(plot);
+	//setCentralWidget(curvePlot);
 	setWindowTitle("( . )_( . )");
 	
 	this->setWindowOpacity(0.9);
@@ -161,10 +122,33 @@ MainWindow::MainWindow()
 	
 	// Server begins to listen the port
 	tcpServer->listen(QHostAddress::Any, PORT);
-	connect(tcpServer, SIGNAL(dataReadSignal()), plot, SLOT(dataProcessSlot())/*Qt::BlockingQueuedConnection*/);
-	connect(tcpServer, SIGNAL(dataReadSignal()), plot_origin, SLOT(dataProcessOriginSlot())/*Qt::BlockingQueuedConnection*/);
+	connect(tcpServer, SIGNAL(dataReadSignal()), curvePlot, SLOT(dataProcessSlot())/*Qt::BlockingQueuedConnection*/);
+	// connect(tcpServer, SIGNAL(dataReadSignal()), curvePlot_origin, SLOT(dataProcessOriginSlot())/*Qt::BlockingQueuedConnection*/);
+	
+	QTimer *timer = new QTimer(this);
+	connect(timer, SIGNAL(timeout()), this, SLOT(test()));
+	timer->start(100);
 }
 
+void MainWindow::test()
+{
+	// cccccnt++;
+	if (cccccnt == 10)
+	{
+		exit(0);
+		printf("fucking");
+	}
+	// QVector<int> val(SPECTROGRAM_SIZE_Y);
+	// for (int i = 0; i < SPECTROGRAM_SIZE_Y; i++)
+	// {
+	// 	val[i] = rand() % 255;
+	// }
+	// double begin = (double)clock();
+	// spectroPlot->insertValues(val);
+	// spectroPlot->replot();
+	// double end = (double)clock();
+	// printf("time: %.2fms\n", (end - begin));
+}
 MainWindow::~MainWindow()
 {
 
@@ -266,51 +250,7 @@ void MainWindow::helpSlot()
 			"<p>4.Press \"Zoom\" button to zoom in or zoom out</p>"));
 }
 
-void MainWindow::enableZoomModeSlot(bool on)
-{
-    d_panner->setEnabled(on);
 
-    d_zoomer->setEnabled(on);
-    d_zoomer->zoom(0);
-
-	d_picker->setEnabled(false);
-
-    showInfo();
-}
-
-void MainWindow::showInfo(QString text)
-{
-    if ( text == QString::null )
-    {
-        if ( d_picker->rubberBand() )
-            text = "Cursor Pos: Press left mouse button in plot region";
-        else
-            text = "Zoom: Press mouse button and drag";
-    }
-
-#ifndef QT_NO_STATUSBAR
-#if QT_VERSION >= 0x040000
-    statusBar()->showMessage(text);
-#else
-    statusBar()->message(text);
-#endif
-#endif
-}
-
-void MainWindow::movedSlot(const QPoint &pos)
-{
-    QString info;
-    info.sprintf("Time=%g, Ampl=%g",
-        plot->invTransform(QwtPlot::xBottom, pos.x()),
-        plot->invTransform(QwtPlot::yLeft, pos.y())//,
-    );
-    showInfo(info);
-}
-
-void MainWindow::selectedSlot(const QwtPolygon &)
-{
-    showInfo();
-}
 
 void MainWindow::settingSlot()
 {

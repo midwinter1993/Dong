@@ -13,6 +13,8 @@
 
 #define CURVE_BUF_SIZE 500
 
+#define NUM_OF_AVG 5
+
 #define MSG_SIZE 81
 
 #define OVERHEAD 10
@@ -21,9 +23,13 @@
 
 #define SOCKET_BUF_SIZE 65536
 
-#define PACKAGE_LEN 1000
+#define PACKET_LEN 1000
 
 #define MATRIX_SIZE 30
+
+#define SPECTROGRAM_SIZE_X 25
+
+#define SPECTROGRAM_SIZE_Y 25
 
 //extern double *dataX;
 //extern double *dataY;

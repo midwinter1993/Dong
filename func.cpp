@@ -1,4 +1,5 @@
 #include <math.h>
+#include <algorithm>
 #include <cassert>
 #include <cstdio>
 #include <fstream>
@@ -11,7 +12,12 @@ using namespace std;
  *|    svdcmp函数引用自<<Numerical Recipe in C>>   |
  * -------------------------------------------------
  */
-#define TEST
+// #define TEST
+
+bool myCmp(double a, double b)
+{
+	return a > b;
+}
 
 double pythag(double a, double b)
 //Computes (a2 + b2)1/2 without destructive underflow or overflow.
@@ -290,7 +296,7 @@ void svdcmp(double a[][MATRIX_SIZE],  double *w, double v[][MATRIX_SIZE], int m,
 	//delete []rv1;
 }
 
-void cov(double data[][PACKAGE_LEN], double *mean, double data_cov[][MATRIX_SIZE], int len)
+void cov(double data[][PACKET_LEN], double *mean, double data_cov[][MATRIX_SIZE], int len)
 {
 	/*
 	---------------------------------------------------
@@ -317,7 +323,7 @@ void cov(double data[][PACKAGE_LEN], double *mean, double data_cov[][MATRIX_SIZE
 				//fout << i << '\t' << j << '\t' << k  << '\t' << data[i][k] - mean[i] << '\t' << data[j][k] - mean[j] << '\t' << data_cov[i][j] << endl;
 				data_cov[i][j] += (data[i][k] - mean[i]) * (data[j][k] - mean[j]);
 				/*cout << data_cov[i][j] << ' ';
-				if(data_cov[i][j]  > double(PACKAGE_LEN * 1000))
+				if(data_cov[i][j]  > double(PACKET_LEN * 1000))
 				{
 					fout.close();
 					assert(0);
@@ -331,7 +337,7 @@ void cov(double data[][PACKAGE_LEN], double *mean, double data_cov[][MATRIX_SIZE
 	}	
 }
 
-void pca(double data[][PACKAGE_LEN], double data_cov[][MATRIX_SIZE], double mean[], int data_len, double *latent)
+int pca(double data[][PACKET_LEN], double data_cov[][MATRIX_SIZE], double mean[], int data_len, double *latent)
 {	
 	double eigvector[30][30];
 #ifdef TEST
@@ -343,6 +349,18 @@ void pca(double data[][PACKAGE_LEN], double data_cov[][MATRIX_SIZE], double mean
 	
 #endif
 	svdcmp(data_cov,  latent, eigvector, MATRIX_SIZE, MATRIX_SIZE);
+	// cout << findSecondMax(latent);
+	//sort(latent, latent + 30, myCmp);
+	/*
+	if (findSecondMax(latent) != 1)
+	{
+		cout << "xiabiao:"<<findSecondMax(latent) << endl;
+		for (int k = 0; k < 30; k++)
+			cout << latent[k] << ' ';
+		assert(0);
+	}
+	*/
+	
 	for (int i = 0; i < MATRIX_SIZE; i++) 
 	{
 		for (int j = 0; j < MATRIX_SIZE; j++)
@@ -354,6 +372,7 @@ void pca(double data[][PACKAGE_LEN], double data_cov[][MATRIX_SIZE], double mean
 #ifdef TEST
 	cout << "------------------------after svd-------------------------------------" << endl;
 #endif
+	return findSecondMax(latent);
 	/*
 	ofstream fout_tmp(".\\cov_tmp.txt");
 	for (int i = 0; i < 30; i++)
@@ -381,6 +400,7 @@ void pca(double data[][PACKAGE_LEN], double data_cov[][MATRIX_SIZE], double mean
 	*/
 }
 
+//{{{
 /*
 int main()
 {
@@ -447,7 +467,7 @@ int main()
 	
 	ifstream fin(".\\data_ori.txt");
 	ofstream fout(".\\data_pca.txt");
-	double data[30][PACKAGE_LEN];
+	double data[30][PACKET_LEN];
 	double mean[30];
 	double latent[30];
 	//double eigenvector[30][30];
@@ -460,15 +480,15 @@ int main()
 	for (i = 0; i < 30; i++) 
 	{
 		tmp = 0.0;
-		for (j = 0; j < PACKAGE_LEN; j++) 
+		for (j = 0; j < PACKET_LEN; j++) 
 		{
 			fin >> data[i][j];
 			tmp += data[i][j];
 		}
-		mean[i] = tmp / (double)PACKAGE_LEN;
+		mean[i] = tmp / (double)PACKET_LEN;
 	}
 
-	pca(data, data_cov, mean, PACKAGE_LEN, latent);
+	pca(data, data_cov, mean, PACKET_LEN, latent);
 
 	for (i = 0; i < 30; i++) 
 	{
@@ -484,3 +504,41 @@ int main()
 	
 }
 */
+//{{{
+
+int findSecondMax(double latent[])
+{
+	double max = latent[0];
+	int index = 0;
+	for (int i = 0; i < MATRIX_SIZE; i++)
+	{
+		if (latent[i] > max)
+		{
+			index = i;
+			max = latent[i];
+		}
+	}
+
+	int secIndex = 0;
+	int secMax = -10000.0;
+	for (int i = 0; i < MATRIX_SIZE; i++)
+	{
+		if (i == index)
+			continue;
+		if (latent[i] > secMax)
+		{
+			secIndex = i;
+			secMax = latent[i];
+		}
+	}
+
+	/*if (secIndex != 1)
+	{
+		for (int k = 0; k < 30; k++)
+			cout << latent[k] << ' ';
+		cout << "----------------fuck-------------------" << endl;
+		// assert(0);
+	}*/
+
+	return secIndex;
+}

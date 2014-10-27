@@ -1,9 +1,10 @@
 #include <qapplication.h>
 #include <QSplashScreen>
 #include <QTextCodec>
-#include "main_window.h"
+#include "mainWindow.h"
 #include "def.h"
-
+#include<unistd.h>
+#include<signal.h>
 
 int main(int argc, char **argv)
 {
@@ -26,8 +27,8 @@ int main(int argc, char **argv)
 	//splash->finish(&mainWindow);
 	//delete splash;
 
-    mainWindow.resize(1000, 600);
-    mainWindow.show();
+	mainWindow.resize(1000, 600);
+	mainWindow.show();
 
     return a.exec(); 
 }

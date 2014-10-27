@@ -1,15 +1,16 @@
-#ifndef MAIN_WINDOW_H
-#define MAIN_WINDOW_H
+#ifndef MAINWINDOW_H
+#define MAINWINDOW_H
 
 #include <QMainWindow>
-#include <qwt_polygon.h>
+
 #include "tcpserver.h"
-#include "data_plot.h"
+#include "curvePlot.h"
+#include "spectrogramPlot.h"
 class QMainWindow;
 class QToolBar;
 class QWidget;
 class QHBoxLayout;
-//class DataPlot;
+//class CurvePlot;
 class QwtCounter;
 class QMenu;
 class QMenuBar;
@@ -17,9 +18,7 @@ class QLabel;
 class QTextEdit;
 class QString;
 
-class QwtPlotZoomer;
-class QwtPlotPicker;
-class QwtPlotPanner;
+
 class QToolButton;
 class settingWindow;
 class QVBoxLayout;
@@ -31,11 +30,11 @@ class MainWindow: public QMainWindow
 private slots:
 	void aboutSlot();
 	void helpSlot();
-	void movedSlot(const QPoint &);
-    void selectedSlot(const QwtPolygon &);
-    void enableZoomModeSlot(bool);
+	
 	void settingSlot();
 	void changeOpacitySlot(qreal opacity);
+
+	void test();
 
 signals:
 	void setOpacitySignal(qreal opacity);
@@ -68,9 +67,7 @@ private:
 	QAction *fileAction;
 	QAction *exitAction;
 
-    QwtPlotZoomer *d_zoomer;
-    QwtPlotPicker *d_picker;
-    QwtPlotPanner *d_panner;
+
     QAction*btnZoom;
 
 	QString styleSheet;
@@ -78,8 +75,9 @@ private:
 	QAction *settingAction;
 
 	TcpServer *tcpServer;
-	DataPlot *plot;
-	DataPlot *plot_origin;
+	CurvePlot *curvePlot;
+	// CurvePlot *curvePlot_origin;
+	SpectrogramPlot *spectroPlot;
 };
 
 #endif

@@ -25,16 +25,16 @@ as a vector w[0..n-1]. Thematrix V (not the transpose V T ) is output as v[0..n-
 /*
 void svdcmp(double a[][MATRIX_SIZE],  double w[], double v[][MATRIX_SIZE], int m, int n);
 
-void cov(double data[][PACKAGE_LEN], double *mean, double data_cov[][MATRIX_SIZE], int len);
+void cov(double data[][PACKET_LEN], double *mean, double data_cov[][MATRIX_SIZE], int len);
 
-void pca(double data[][PACKAGE_LEN], double data_cov[][MATRIX_SIZE], double mean[], int data_len , double latent[]);
+void pca(double data[][PACKET_LEN], double data_cov[][MATRIX_SIZE], double mean[], int data_len , double latent[]);
 */
 void svdcmp(double a[][MATRIX_SIZE],  double *w, double v[][MATRIX_SIZE], int m, int n);
 
-void cov(double data[][PACKAGE_LEN], double *mean, double data_cov[][MATRIX_SIZE], int len);
+void cov(double data[][PACKET_LEN], double *mean, double data_cov[][MATRIX_SIZE], int len);
 
-void pca(double data[][PACKAGE_LEN], double data_cov[][MATRIX_SIZE], double mean[], int data_len , double *latent);
+int pca(double data[][PACKET_LEN], double data_cov[][MATRIX_SIZE], double mean[], int data_len , double *latent);
 
-
+int findSecondMax(double latent[]);
 
 #endif
