@@ -148,6 +148,7 @@ void MainWindow::test()
 	// spectroPlot->replot();
 	// double end = (double)clock();
 	// printf("time: %.2fms\n", (end - begin));
+	
 }
 MainWindow::~MainWindow()
 {

@@ -31,7 +31,7 @@
 #include "func.h"
 #include "curveItem.h"
 
-// #define TEST
+#define TEST
 
 using namespace std;
 
@@ -41,8 +41,8 @@ double latent[MATRIX_SIZE];
 //double vec[MATRIX_SIZE];
 
 double fuck[CURVE_BUF_SIZE];
-QVector<double> dataToPlotBuf(NUM_OF_AVG);
-QVector<double> dataToPlot;
+QVector<double> dataToPlotBuf;
+QVector<double> dataToPlot(CURVE_BUF_SIZE);
 QVector<double> dataToPlotOrigin(CURVE_BUF_SIZE);
 double data_mean[MATRIX_SIZE];
 double data_mean_tmp[MATRIX_SIZE];
@@ -364,7 +364,7 @@ void CurvePlot::dataProcessSlot()
 			/* 绘制图形的数据按照NUM_OF_AVG平均
 			 */
 			dataToPlotBuf.append(tmp);
-			if (dataToPlotBuf.size() == NUM_OF_AVG)
+			if (dataToPlotBuf.size() >= NUM_OF_AVG)
 			{
 				for (int k = 0; k < NUM_OF_AVG; k++)
 					dataToPlot[dataToPlotCnt] += dataToPlotBuf[k];
@@ -395,6 +395,7 @@ void CurvePlot::dataProcessSlot()
 		if ( cnt_tmp > 0)
 		{
 			curve->setDataY(dataToPlot, cnt_tmp, axisYMax, axisYMin);
+			setAxisScale(QwtPlot::yLeft, axisYMin, axisYMax);
 			replot();
 		}
 	}

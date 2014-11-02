@@ -1,7 +1,7 @@
 #ifndef DEF_H
 #define DEF_H
 
-#define PORT 12345
+#define PORT 12346
 
 #define PLOT_SIZE  CURVE_BUF_SIZE// 0 to 200
 

@@ -46,7 +46,9 @@ void CurveItem::setDataY(const QVector<double> &data, const int &len, double &ma
 		curveData->dataY[curveData->dataStart] = data[i];
 	}
 	assert(curveData->dataY.size() == CURVE_BUF_SIZE);
-	for (int i = 0; i < CURVE_BUF_SIZE; i++) 
+	min = curveData->dataY[0];
+	max = curveData->dataY[0];
+	for (int i = 1; i < CURVE_BUF_SIZE; i++) 
 	{
 		if (curveData->dataY[i] < min)
 			min = curveData->dataY[i];
@@ -73,12 +75,12 @@ void CurveItem::draw(QPainter *painter, const QwtScaleMap &xMap, const QwtScaleM
 
 	double x1, y1, x2, y2;
 	int tmpStart = curveData->dataStart;
-	x1 = xMap.transform(curveData->dataX[tmpStart]);
+	x1 = xMap.transform(curveData->dataX[0]);
 	y1 = yMap.transform(curveData->dataX[tmpStart]);
 	for (int i = 0; i < CURVE_BUF_SIZE - 2; i++)
 	{
 		// std::cout << "(" << dataX.at(i) << " " << dataY.at(i) << ")--->" << "(" << x1 << ' ' << y1 << ")"  << std::endl;
-		x2 = xMap.transform(curveData->dataX[(tmpStart + 1) % CURVE_BUF_SIZE]);
+		x2 = xMap.transform(curveData->dataX[i + 1]);
 		y2 = yMap.transform(curveData->dataY[(tmpStart + 1) % CURVE_BUF_SIZE]);
 		QwtPainter::drawLine(painter, x1, y1, x2, y2);
 		x1 = x2;
