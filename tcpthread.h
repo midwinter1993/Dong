@@ -50,5 +50,7 @@ signals:
 private:
 	QTcpSocket *client;
 	int socketDescriptor_tmpObj;
+	
+	void dataProcess();
 };
 #endif

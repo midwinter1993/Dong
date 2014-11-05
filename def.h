@@ -31,8 +31,6 @@
 
 #define SPECTROGRAM_SIZE_Y 25
 
-//extern double *dataX;
-//extern double *dataY;
-//extern char *buf;
+#define PI 3.141592657589793
 
 #endif

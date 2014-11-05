@@ -19,7 +19,7 @@ static int iminarg1,iminarg2;
 double pythag(double a, double b);
 
 /*Given a matrix a[0..m-1][0..n-1], this routine computes its singular value decomposition, A =
-U¡¤W¡¤V T. Thematrix U replaces a on output. The diagonal matrix of singular values W is output
+UÂ¡Â¤WÂ¡Â¤V T. Thematrix U replaces a on output. The diagonal matrix of singular values W is output
 as a vector w[0..n-1]. Thematrix V (not the transpose V T ) is output as v[0..n-1][0..n-1].
 */
 /*
@@ -37,4 +37,5 @@ int pca(double data[][PACKET_LEN], double data_cov[][MATRIX_SIZE], double mean[]
 
 int findSecondMax(double latent[]);
 
+void FFT(const QVector<double> &input, const int &length, QVector<double> &fftAns);
 #endif
