@@ -26,7 +26,7 @@ public slots:
 	// void setStatusStopSlot();
 	void clearSlot();
 	void fileDrawSlot();
-	void dataProcessSlot();
+	void dataDrawSlot();
 	void dataProcessOriginSlot();
 	
     void enableZoomModeSlot(bool);
@@ -41,11 +41,7 @@ private:
 	//double *dataY;
 	double axisYMin;
 	double axisYMax;
-
-	int dataCount;
-	int dataPoint;
 	int lastPoint;
-	int packetCnt;
 	
 	CurveItem *curve;
 	QwtPlotZoomer *d_zoomer;

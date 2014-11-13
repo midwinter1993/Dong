@@ -122,7 +122,7 @@ MainWindow::MainWindow()
 	
 	// Server begins to listen the port
 	tcpServer->listen(QHostAddress::Any, PORT);
-	connect(tcpServer, SIGNAL(dataReadSignal()), curvePlot, SLOT(dataProcessSlot())/*Qt::BlockingQueuedConnection*/);
+	connect(tcpServer, SIGNAL(dataReadSignal()), curvePlot, SLOT(dataDrawSlot())/*Qt::BlockingQueuedConnection*/);
 	// connect(tcpServer, SIGNAL(dataReadSignal()), curvePlot_origin, SLOT(dataProcessOriginSlot())/*Qt::BlockingQueuedConnection*/);
 	
 	QTimer *timer = new QTimer(this);

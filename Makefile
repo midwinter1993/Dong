@@ -12,10 +12,10 @@ CC            = gcc
 CXX           = g++
 DEFINES       = -DQT_WEBKIT -DQT_NO_DEBUG -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB -DQT_SHARED 
 CFLAGS        = -pg -pipe -O2 -Wall -W -D_REENTRANT $(DEFINES)
-CXXFLAGS      = -pipe -O2 -Wall -W -D_REENTRANT $(DEFINES) -pg
+CXXFLAGS      = -pipe -O2 -Wall -W -D_REENTRANT $(DEFINES) #-pg
 INCPATH       = -I/usr/share/qt4/mkspecs/linux-g++ -I. -I/usr/include/qt4/QtCore -I/usr/include/qt4/QtNetwork -I/usr/include/qt4/QtGui -I/usr/include/qt4 -I. -I.INCLUDEPATH -I+= -I/usr/local/qwt-5.2.1/include -I.
 LINK          = g++
-LFLAGS        = -Wl,-O1 -pg
+LFLAGS        = -Wl,-O1 #-pg
 LIBS          = $(SUBLIBS)  -L/usr/lib/i386-linux-gnu -L/usr/local/qwt-5.2.1/lib/ -lqwt -lQtGui -lQtNetwork -lQtCore -lpthread 
 AR            = ar cqs
 RANLIB        = 

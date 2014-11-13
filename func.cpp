@@ -1,15 +1,17 @@
-#include <math.h>
+#include <cmath>
+#include<complex>
 #include <algorithm>
 #include <cassert>
 #include <cstdio>
 #include <fstream>
 #include <iostream>
 #include <cassert>
+#include <QVector>
 #include "func.h"
 using namespace std;
 
 /*--------------------------------------------------
- *|    svdcmp����������<<Numerical Recipe in C>>   |
+ *|    svdcmp函数参考自<<Numerical Recipe in C>>   |
  * -------------------------------------------------
  */
 // #define TEST
@@ -541,4 +543,77 @@ int findSecondMax(double latent[])
 	}*/
 
 	return secIndex;
+}
+
+/*
+ *注：参考blog 地址为 http://blog.csdn.net/qhs1573/article/details/12254205，非原创
+FFT：快速傅里叶变换，传进去的是一个double向量，维度为1024，长度是 int 型 length ，返回值也是一个 double类型的向量 fftAns
+result是一个复数类型的向量，fftAns是根据result来计算其每一项的模长得出的
+*/
+
+//length 为输入数据的长度，即傅里叶变换的点数，不足时以 0 补足
+void FFT(const QVector<double> &input, const int &length, QVector<double> &fftAns)
+{    
+	int count = 0;          //迭代次数
+	for(int i = length; i > 1; i/=2)
+		count++;
+	double angle ;          //角度
+	
+	complex<double> * inputMatrix = new complex<double> [length];
+	for(int i = 0; i < length; i++)
+		inputMatrix[i] = complex<double>(input[i], 0.0);
+	complex<double> * w = new complex<double> [ length/2 ];
+	complex<double>  * x1 = new complex<double>  [length];
+	complex<double>  * x2 = new complex<double>  [length];
+	complex<double>  * result = new complex<double>  [length];
+
+	//计算加权系数
+	for(int i = 0; i < length/2; i++)
+	{
+		angle  = -i*PI*2/length;
+		w[i] = complex<double>( cos (angle),sin(angle) );
+	}
+
+	
+	//将时域点写入x1
+	for(int i  = 0; i < length; i++)
+	{
+		x1[i] = inputMatrix[i];
+	}
+
+	//采用蝶形算法进行傅里叶变换
+	for( int k = 0; k < count; k++)
+	{
+		for(int j = 0; j < ( 1<<k ); j++ )
+		{
+			int bfsize = 1 << (count - k );        //做蝶形运算两点间距离
+			for(int i = 0; i < bfsize/2 ; i++)
+			{
+				int p = j * bfsize;
+				x2[ i+p ] = x1[ i+p ] + x1[ i+p+bfsize/2 ];
+				x2[ i+p+bfsize/2] = ( x1[i+p] - x1[ i+p+bfsize/2 ] )* w[ i*(1<<k)];
+			}
+		}
+		complex<double> *temp = x1;
+		x1 = x2;
+		x2 = temp;
+	}
+
+	//重新排序
+	for( int i = 0 ; i < length; i++)
+	{
+		int p = 0;
+		for(int j = 0; j < count; j++)
+		{
+			if( i & (1<<j) )
+				p+= 1 << (count-j-1);
+		}
+		result[i] = x1[p];
+	}
+
+	//计算每一个复数的模长
+	for(int i = 0; i < length; i++)
+	{
+		fftAns[i] = sqrt( result[i].real()* result[i].real() + result[i].imag()*result[i].imag() );
+	}
 }
