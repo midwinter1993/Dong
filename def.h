@@ -1,7 +1,7 @@
 #ifndef DEF_H
 #define DEF_H
 
-#define PORT 12346
+#define PORT 5555
 
 #define PLOT_SIZE  CURVE_BUF_SIZE// 0 to 200
 
@@ -23,7 +23,7 @@
 
 #define SOCKET_BUF_SIZE 65536
 
-#define PACKET_LEN 1000
+#define PACKET_LEN 512
 
 #define MATRIX_SIZE 30
 

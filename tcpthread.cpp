@@ -7,6 +7,8 @@
 #include <QtGlobal>
 #include <QThread>
 
+#define TEST
+
 extern QVector<double> dataToPlot;
 
 //buffer for receive the data through socket
@@ -136,6 +138,7 @@ void TmpObject::dataProcess()
 		//长度达到PACKET_LEN时，做一次PCA
 		if (packetCnt == PACKET_LEN)
 		{
+			qDebug() << "------------------------------Do PCA-------------------------\n";
 			//取平均值
 			for (int i = 0; i < MATRIX_SIZE; i++)
 			{
@@ -166,10 +169,10 @@ void TmpObject::dataProcess()
 			}
 		}
 
-		if (dataCount > PACKET_LEN)
+		if (dataCount >= PACKET_LEN)
 		{
 			//做完一次PCA后可以收集数据进行绘图
-			for (int i = 0; i < 30; i++)
+			for (int i = 0; i < MATRIX_SIZE; i++)
 			{
 				csi[i] = sqrt(((double)buf_tmp[21 + i]) * ((double)buf_tmp[21 + i]) + ((double)buf_tmp[51 + i]) * ((double)buf_tmp[51 + i]));
 			}
@@ -186,7 +189,7 @@ void TmpObject::dataProcess()
 			/* 绘制图形的数据按照NUM_OF_AVG平均
 			 */
 			dataToPlotBuf.append(tmp);
-			if (dataToPlotBuf.size() >= NUM_OF_AVG)
+			while (dataToPlotBuf.size() >= NUM_OF_AVG)
 			{
 				for (int k = 0; k < NUM_OF_AVG; k++)
 					dataToPlot[dataToPlotCnt] += dataToPlotBuf[k];
