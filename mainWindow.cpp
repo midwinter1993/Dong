@@ -107,7 +107,8 @@ MainWindow::MainWindow()
 	QHBoxLayout *mainLayout = new QHBoxLayout(widget);
 	mainLayout->addWidget(curvePlot);
 	// mainLayout->addWidget(curvePlot_origin);
-	mainLayout->addWidget(spectroPlot);
+	//TODO: 加入频谱图
+	// mainLayout->addWidget(spectroPlot);
 	
 	widget->setLayout(mainLayout);
 	setCentralWidget(widget);
@@ -148,7 +149,6 @@ void MainWindow::test()
 	// spectroPlot->replot();
 	// double end = (double)clock();
 	// printf("time: %.2fms\n", (end - begin));
-	
 }
 MainWindow::~MainWindow()
 {

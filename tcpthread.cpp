@@ -1,22 +1,34 @@
 #include "tcpthread.h"
 #include "def.h"
 #include "func.h"
+#include <fstream>
 #include <cmath>
 #include <cassert>
 #include <QTcpSocket>
+#include <QByteArray>
 #include <QtGlobal>
 #include <QThread>
+#include <QTime>
+#include <QMutex>
 
+using namespace std;
 #define TEST
 
 extern QVector<double> dataToPlot;
 
+ofstream fout("./fftData.out");
+ofstream foutOri("./fftData.txt");
+QTime q_timer;
+int packet_sum;
+qint64 packet_byte_num;
 //buffer for receive the data through socket
-char socket_rec_buf[SOCKET_REC_BUF_SIZE];
+// char socket_rec_buf[SOCKET_REC_BUF_SIZE * 2];
+QByteArray sock_rec_buf;
 
 int dataToPlotCnt = 0;
 int dataCount;
 int packetCnt;
+int fftCnt;
 
 double packageBuf[MATRIX_SIZE][PACKET_LEN];
 double data_cov[MATRIX_SIZE][MATRIX_SIZE];
@@ -25,18 +37,24 @@ double latent[MATRIX_SIZE];
 
 double fuck[CURVE_BUF_SIZE];
 QVector<double> dataToPlotBuf;
+QVector<double> fftResultBuf(CURVE_BUF_SIZE);
+QVector<double> dataToFFT(CURVE_BUF_SIZE);
 
 double data_mean[MATRIX_SIZE];
 double data_mean_tmp[MATRIX_SIZE];
 double csi[MATRIX_SIZE];
 double vec_tmp[30];
 
+QMutex mutex;
+
 TcpThread::TcpThread(int sockDpt, QObject *parent):
 	QThread(parent)
 {
 	socketDescriptor = sockDpt;
 	tmpObj = NULL;
+#ifdef TEST
 	qDebug() << "tcpthread created" << QThread::currentThreadId();
+#endif
 }
 
 TcpThread::~TcpThread()
@@ -61,12 +79,12 @@ void TcpThread::run()
 void TcpThread::readDataSlot()
 {
 
-	if (client->bytesAvailable() < MSG_SIZE)
-		return;
+	// if (client->bytesAvailable() < MSG_SIZE)
+		// return;
 	// Q_ASSERT(client->read(buf, MSG_SIZE) == MSG_SIZE);
-	client->read(socket_rec_buf, MSG_SIZE);
+	// client->read(socket_rec_buf, MSG_SIZE);
 	// qDebug() << "temp " << temp << '\n';
-	emit this->dataReadSignal();
+	// emit this->dataReadSignal();
 }
 
 TmpObject::TmpObject(int sockDpt)
@@ -89,32 +107,60 @@ void TmpObject::readDataSlot_tmpObj()
 	// qDebug() << "receive data thread ID: " << QThread::currentThreadId();
 	//qDebug() << "bytes available: " << client->bytesAvailable() << '\n';
 	
-	quint64 tmp = client->bytesAvailable();
-	qDebug() << "client bytesAvailable-------------->" << tmp << '\n';
-	if (tmp < MSG_SIZE || tmp % MSG_SIZE != 0)
+	packet_byte_num = client->bytesAvailable();
+#ifdef TEST
+	qDebug() << "client bytesAvailable-------------->" << packet_byte_num << '\n';
+#endif
+	if (packet_byte_num < MSG_SIZE || packet_byte_num % MSG_SIZE != 0)
 		Q_ASSERT(0);
 
-	client->read(socket_rec_buf, tmp);
-	*(quint64 *)(socket_rec_buf + SOCKET_REC_BUF_SIZE - 9) = tmp;
+	sock_rec_buf = client->readAll();
+	qint64 num = sock_rec_buf.count();
+	// qint64 num = client->read(socket_rec_buf, packet_byte_num); 
+	if (num != packet_byte_num)
+	{
+		qDebug() << "read error----------!   " << num << packet_byte_num;
+		assert(0);
+	}
+
+#ifdef TEST
+	qDebug() << "received bytes -----> " << num;
+#endif
+	// *(quint64 *)(socket_rec_buf + SOCKET_REC_BUF_SIZE - 9) = tmp;
 
 	dataProcess();
-	emit this->dataReadSignal_tmpObj();
+#ifdef TEST
+	qDebug() << "dataToPlotBuf.size() :----> " << dataToPlotBuf.size();
+#endif
+	if (dataToPlotCnt > 0)
+	{
+		mutex.lock();
+		emit this->dataReadSignal_tmpObj();
+	}
 }
 
 void TmpObject::disconnectedSlot_tmpObj()
 {
 	// delete client;
+#ifdef TEST
 	qDebug() << "tmpObj disconnect\n";
+#endif
 	emit disconnectedSignal_tmpObj();
+	int time_tmp = q_timer.restart();
+	qDebug() << "Time: " << time_tmp << "packet_sum: " << packet_sum;
+	// foutOri.close();
+	// fout.close();
 }
 
 void TmpObject::dataProcess()
 {
-	char *buf_tmp = socket_rec_buf;
-	dataToPlotCnt = 0;
+	// char *buf_tmp = socket_rec_buf;
+	char *buf_tmp = sock_rec_buf.data();
 	
 	//received package numbers，每个包长度为81byte，在接受socket时，已将接受到的byte数存入socket_rec_buf + SOCKET_REC_BUF_SIZE - 9位置处
-	quint64 packet_num = *(quint64 *)(socket_rec_buf + SOCKET_REC_BUF_SIZE -9) / 81;
+	// quint64 packet_num = *(quint64 *)(socket_rec_buf + SOCKET_REC_BUF_SIZE -9) / 81;
+	qint64 packet_num = packet_byte_num / 81;
+	packet_sum += packet_num;
 #ifdef TEST
 	qDebug() << "packet_num-------------->" << packet_num << '\n';
 #endif
@@ -138,7 +184,9 @@ void TmpObject::dataProcess()
 		//长度达到PACKET_LEN时，做一次PCA
 		if (packetCnt == PACKET_LEN)
 		{
+#ifdef TEST
 			qDebug() << "------------------------------Do PCA-------------------------\n";
+#endif
 			//取平均值
 			for (int i = 0; i < MATRIX_SIZE; i++)
 			{
@@ -189,6 +237,26 @@ void TmpObject::dataProcess()
 			/* 绘制图形的数据按照NUM_OF_AVG平均
 			 */
 			dataToPlotBuf.append(tmp);
+			dataToFFT[fftCnt++] = tmp;
+			// fft变化PCA后的结果
+			if (fftCnt >= FFT_SUM_THRESHOLD)
+			{
+#ifdef TEST
+				qDebug() << "Do FFTFFTFFTFFTFFTFFTFFTFFTFFTFFTFFTFFTFFTFFTFFTFFTFFTFFTFFTFFTFFT";
+#endif
+				fftCnt = 0;
+				FFT(dataToFFT, CURVE_BUF_SIZE, fftResultBuf);
+				// qDebug() << "FFFFFFFFFFFTTTTTTTTTTT";
+				// for (int k = 0; k < CURVE_BUF_SIZE; k++)
+				// {
+				// 	foutOri << dataToFFT[k] << std::endl;
+				// 	fout << fftResultBuf[k] << std::endl;
+				// }
+				// fout << "-------------------------------------------------------------------";
+				// assert(0);
+			}
+			mutex.lock();
+			dataToPlotCnt = 0;
 			while (dataToPlotBuf.size() >= NUM_OF_AVG)
 			{
 				for (int k = 0; k < NUM_OF_AVG; k++)
@@ -199,6 +267,7 @@ void TmpObject::dataProcess()
 
 				assert(dataToPlot[dataToPlotCnt - 1] != 0);
 			}
+			mutex.unlock();
 			//重复记录，内存出错
 			// fuck[dataToPlotCnt - 1] = dataToPlot[dataToPlotCnt - 1];
 			//----------------------------------
