@@ -11,7 +11,7 @@
 
 #define SOCKET_REC_BUF_SIZE 8111
 
-#define CURVE_BUF_SIZE 500
+#define CURVE_BUF_SIZE 1024
 
 #define NUM_OF_AVG 5
 
@@ -33,4 +33,5 @@
 
 #define PI 3.141592657589793
 
+#define FFT_SUM_THRESHOLD CURVE_BUF_SIZE
 #endif

@@ -22,6 +22,7 @@
 
 #include <QtGlobal>
 #include <QThread>
+#include <QMutex>
 #include <cassert>
 #include <stdio.h>
 #include <stdlib.h>
@@ -40,9 +41,11 @@ QVector<double> dataToPlot(CURVE_BUF_SIZE);
 QVector<double> dataToPlotOrigin(CURVE_BUF_SIZE);
 
 
-extern char socket_rec_buf[];
+// extern char socket_rec_buf[];
+extern QByteArray sock_rec_buf;
 extern int dataToPlotCnt;
 extern int dataCount;
+extern QMutex mutex;
 
 class Zoomer: public QwtPlotZoomer
 {
@@ -276,28 +279,28 @@ void CurvePlot::dataDrawSlot()
 	if (dataCount > PACKET_LEN) 
 	{
 		int cnt_tmp = dataToPlotCnt;
-		assert(cnt_tmp == dataToPlotCnt);
 #ifdef TEST
 		qDebug() << "-------------------cnt_tmp-----------------" << cnt_tmp << endl;
 #endif
-		if ( cnt_tmp > 0)
-		{
-			curve->setDataY(dataToPlot, cnt_tmp, axisYMax, axisYMin);
-			setAxisScale(QwtPlot::yLeft, axisYMin, axisYMax);
-			replot();
-		}
+		assert(cnt_tmp == dataToPlotCnt && cnt_tmp > 0);
+		curve->setDataY(dataToPlot, cnt_tmp, axisYMax, axisYMin);
+		setAxisScale(QwtPlot::yLeft, axisYMin, axisYMax);
+		replot();
 	}
+	mutex.unlock();
 }
 
 //用于绘制原始数据
 void CurvePlot::dataProcessOriginSlot()
 {
-	char *buf_tmp = socket_rec_buf;
+	/*
+	// char *buf_tmp = socket_rec_buf;
+	char *buf_tmp = sock_rec_buf.data();
 	
 	//received package numbers，每个包长度为81byte，在接受socket时，已将接受到的byte数存入socket_rec_buf + SOCKET_REC_BUF_SIZE - 9位置处
-	quint64 packet_num = *(quint64 *)(socket_rec_buf + SOCKET_REC_BUF_SIZE - 9) / 81;
+	// quint64 packet_num = *(quint64 *)(socket_rec_buf + SOCKET_REC_BUF_SIZE - 9) / 81;
 #ifdef TEST
-		qDebug() << "packet_num-------------->" << packet_num << '\n';
+		// qDebug() << "packet_num-------------->" << packet_num << '\n';
 #endif
 
 	//timeStamp = *(unsigned long*)(buf_tmp + 2) / 1e6;
@@ -317,7 +320,7 @@ void CurvePlot::dataProcessOriginSlot()
 		packet_num--;
 		buf_tmp += 81;
 	}
-/*
+*
 	for (int i = CURVE_BUF_SIZE - 1; i > cnt_tmp - 1; i--)
 	{
 		dataY[i] = dataY[i - 1];
@@ -329,8 +332,9 @@ void CurvePlot::dataProcessOriginSlot()
 	// delete []dataToPlotOrigin;
 	
     setAxisScale(QwtPlot::yLeft, axisYMin, axisYMax);
-    */
+    *
 	curve->setDataY(dataToPlotOrigin, cnt_tmp, axisYMax, axisYMin);
     setAxisScale(QwtPlot::yLeft, axisYMin, axisYMax);
 	replot();
+	*/
 }
