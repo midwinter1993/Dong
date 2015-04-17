@@ -9,6 +9,7 @@
 #include <cassert>
 #include <iostream>
 #include "def.h"
+
 class DataPair
 {
 public:
@@ -24,7 +25,7 @@ CurveItem::CurveItem(QString title):
 	for (int i = 0; i < CURVE_BUF_SIZE; i++)
 	{
 		curveData->dataX.append(i * 0.5);
-		curveData->dataY.append(10);
+		curveData->dataY.append(0);
 	}
 	curveData->dataStart = 0;
 	// setPen(QPen(Qt::red));

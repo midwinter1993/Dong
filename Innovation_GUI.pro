@@ -10,26 +10,26 @@ INCLUDEPATH += .
 # Input
 HEADERS += curvePlot.h \
 		   curveItem.h \
-		   spectrogramPlot.h \
-		   spectrogramItem.h \
            def.h \
+		   func.h \
            mainWindow.h \
+		   matrix.h \
+		   pca.h \
            pixmaps.h \
-           settingWindow.h \
            tcpserver.h \
            tcpthread.h \
-		   func.h \
            images/clear.xpm
+
 SOURCES += curvePlot.cpp \
 		   curveItem.cpp \
-		   spectrogramPlot.cpp \
-		   spectrogramItem.cpp \
+		   func.cpp \
            main.cpp \
            mainWindow.cpp \
-           settingWindow.cpp \
+		   matrix.cpp \
+		   pca.cpp \
            tcpserver.cpp \
-           tcpthread.cpp \
-		   func.cpp
+           tcpthread.cpp 
+
 RESOURCES += qrc/curve.qrc \
 			 qrc/resource.qrc \
 			 qrc/source.qrc

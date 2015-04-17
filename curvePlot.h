@@ -6,9 +6,6 @@
 
 class CurveItem;
 class MainWindow;
-class QwtPlotZoomer;
-class QwtPlotPicker;
-class QwtPlotPanner;
 
 class CurvePlot : public QwtPlot
 {
@@ -22,15 +19,8 @@ public:
 	//char *buf;
 
 public slots:
-	// void setStatusStartSlot();
-	// void setStatusStopSlot();
-	void clearSlot();
-	void fileDrawSlot();
 	void dataDrawSlot();
-	void dataProcessOriginSlot();
 	
-    void enableZoomModeSlot(bool);
-
 signals:
 	void updataPlotSignal();
 
@@ -44,9 +34,6 @@ private:
 	int lastPoint;
 	
 	CurveItem *curve;
-	QwtPlotZoomer *d_zoomer;
-    QwtPlotPicker *d_picker;
-    QwtPlotPanner *d_panner;
 };
 
 #endif
